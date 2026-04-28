@@ -187,9 +187,13 @@ class BankingFAQAssistant:
         if self.detect_greeting(user_message):
             return BankingResponse(
                 intent="greeting",
-                answer="Hi! How can I help you today?",
+                answer=(
+                    "Hi! I'm your AML & Fraud Detection Co-Pilot. "
+                    "I can help with AML, fraud detection, KYC, and banking questions. "
+                    "How can I assist you today?"
+                ),
                 confidence=1.0,
-                reasoning="The user greeted the assistant, so I respond with a friendly welcome message.",
+                reasoning="The user greeted the assistant, so I respond with a friendly introduction and offer help.",
                 details={
                     "fraud_risk_assessment": {
                         "risk_level": "low",

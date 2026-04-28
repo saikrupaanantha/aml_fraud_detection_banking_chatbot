@@ -54,22 +54,23 @@ if run_button:
             st.subheader("Answer")
             st.write(result.answer)
 
-            st.subheader("Structured JSON Response")
-            st.code(json.dumps(result.model_dump(by_alias=True), indent=2), language="json")
+            if result.intent != "greeting":
+                st.subheader("Structured JSON Response")
+                st.code(json.dumps(result.model_dump(by_alias=True), indent=2), language="json")
 
-            st.subheader("Reasoning")
-            st.write(result.reasoning)
+                st.subheader("Reasoning")
+                st.write(result.reasoning)
 
-            if result.details and result.details.get("fraud_risk_assessment"):
-                risk = result.details["fraud_risk_assessment"]
-                st.subheader("Fraud Risk Assessment")
-                st.write(
-                    {
-                        "risk_level": risk.risk_level,
-                        "matched_rules": risk.matched_rules,
-                        "recommended_action": risk.recommended_action,
-                    }
-                )
+                if result.details and result.details.get("fraud_risk_assessment"):
+                    risk = result.details["fraud_risk_assessment"]
+                    st.subheader("Fraud Risk Assessment")
+                    st.write(
+                        {
+                            "risk_level": risk.risk_level,
+                            "matched_rules": risk.matched_rules,
+                            "recommended_action": risk.recommended_action,
+                        }
+                    )
 
         except GuardrailViolation as exc:
             st.error(f"Guardrail triggered: {exc.reason}")
