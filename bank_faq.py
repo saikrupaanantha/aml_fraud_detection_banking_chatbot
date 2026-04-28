@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from openai import OpenAI
+from openai import OpenAI, OpenAIError
 import yaml
 from pydantic import ValidationError
 
@@ -23,6 +23,12 @@ class GuardrailViolation(Exception):
 
 
 class OffTopicError(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.message = message
+
+
+class OpenAIAPIError(Exception):
     def __init__(self, message: str):
         super().__init__(message)
         self.message = message
@@ -104,6 +110,12 @@ class BankingFAQAssistant:
         text_lower = text.lower()
         return not any(keyword in text_lower for keyword in valid_keywords)
 
+    @staticmethod
+    def detect_greeting(text: str) -> bool:
+        greetings = ["hi", "hello", "hey", "good morning", "good afternoon", "good evening"]
+        text_lower = text.lower().strip()
+        return any(text_lower == greeting or text_lower.startswith(greeting + " ") for greeting in greetings)
+
     def build_prompt(self, user_message: str) -> List[Dict[str, str]]:
         system_instructions = self.prompt_template["system"]["instructions"].strip()
         output_schema = self.prompt_template["output_format"]["schema"].strip()
@@ -132,14 +144,17 @@ class BankingFAQAssistant:
         if not self.api_key:
             raise RuntimeError("OPENAI_API_KEY is required to call the model.")
 
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            temperature=0.2,
-            max_tokens=450,
-            n=1,
-        )
-        return response.choices[0].message.content.strip()
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=0.2,
+                max_tokens=450,
+                n=1,
+            )
+            return response.choices[0].message.content.strip()
+        except OpenAIError as exc:
+            raise OpenAIAPIError(str(exc)) from exc
 
     @staticmethod
     def _extract_json(text: str) -> str:
@@ -169,6 +184,21 @@ class BankingFAQAssistant:
         )
 
     def ask(self, user_message: str) -> BankingResponse:
+        if self.detect_greeting(user_message):
+            return BankingResponse(
+                intent="greeting",
+                answer="Hi! How can I help you today?",
+                confidence=1.0,
+                reasoning="The user greeted the assistant, so I respond with a friendly welcome message.",
+                details={
+                    "fraud_risk_assessment": {
+                        "risk_level": "low",
+                        "matched_rules": ["greeting"],
+                        "recommended_action": "Continue the conversation",
+                    }
+                },
+            )
+
         pii = self.detect_pii(user_message)
         if pii:
             return self.refusal_response(

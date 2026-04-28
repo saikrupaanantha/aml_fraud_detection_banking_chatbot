@@ -39,6 +39,13 @@ export OPENAI_API_KEY="your_api_key_here"
 streamlit run app.py
 ```
 
+## Usage
+
+- Click a recommended question in the sidebar to populate the chat input.
+- Enter any AML, fraud detection, or basic banking question and press **Send**.
+- The app shows the answer, chain-of-thought reasoning, and a validated JSON response.
+- If a question is completely unrelated, the assistant returns a plain-text message asking you to contact the bank.
+
 ## Files
 
 - `app.py` - Streamlit chatbot UI

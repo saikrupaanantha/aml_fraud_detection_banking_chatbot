@@ -5,7 +5,7 @@ import json
 import streamlit as st
 from dotenv import load_dotenv
 
-from bank_faq import BankingFAQAssistant, GuardrailViolation, OffTopicError
+from bank_faq import BankingFAQAssistant, GuardrailViolation, OffTopicError, OpenAIAPIError
 from schemas import BankingResponse
 
 load_dotenv()
@@ -75,6 +75,8 @@ if run_button:
             st.error(f"Guardrail triggered: {exc.reason}")
         except OffTopicError as exc:
             st.error(exc.message)
+        except OpenAIAPIError as exc:
+            st.error(f"OpenAI API error: {exc.message}")
         except Exception as exc:
             st.error(f"Unable to answer request: {exc}")
 
